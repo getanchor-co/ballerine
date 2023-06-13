@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: ballerine-backoffice
+  IMAGE_NAME: ballerine_backoffice_service
   AWS_REGION: eu-west-2 # set this to your preferred AWS region, e.g. us-west-1
-  ECR_REPOSITORY: ballerine-backoffice_staging # set this to your Amazon ECR repository name
+  ECR_REPOSITORY: ballerine_backoffice_service_staging # set this to your Amazon ECR repository name
 
 
 jobs:
