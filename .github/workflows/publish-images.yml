@@ -1,12 +1,13 @@
 name: Publish workflow-service image
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/workflows-service
+  IMAGE_NAME: ballerine_backoffice_service
+  AWS_REGION: eu-west-2 # set this to your preferred AWS region, e.g. us-west-1
+  ECR_REPOSITORY: ballerine_backoffice_service_staging # set this to your Amazon ECR repository name
+
 
 jobs:
   build-and-push-image:
@@ -19,24 +20,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install jq    
+      - name: Install jq
         run: sudo apt-get install jq
 
-      - name: Check if the tag name contains "workflows-service"
-        run: |
-          TAG_NAME=${{ github.event.release.tag_name }}
-          if [[ "$TAG_NAME" != *"workflows-service"* ]]; then
-            echo "Release tag does not contain 'workflows-service'. Skipping this workflow."
-            exit 1
-          fi  
-        continue-on-error: false
+      #      - name: Check if the tag name contains "workflows-service"
+      #        run: |
+      #          TAG_NAME=${{ github.event.release.tag_name }}
+      #          if [[ "$TAG_NAME" != *"workflows-service"* ]]; then
+      #            echo "Release tag does not contain 'workflows-service'. Skipping this workflow."
+      #            exit 1
+      #          fi
+      #        continue-on-error: false
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          role-to-assume: arn:aws:iam::229340442280:role/ballerine-gh-actions-staging-role
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
       - name: Get package version from package.json
         id: get_version
@@ -50,8 +54,11 @@ jobs:
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: latest
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_TAG }}
           tags: |
             type=semver,pattern={{version}},value=v${{ steps.get_version.outputs.version }}
 
