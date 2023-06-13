@@ -56,5 +56,6 @@ jobs:
           commit: 'chore: release package(s)'
           publish: pnpm release
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_WRITE_SECRET }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          USER_NAME: ${{ secrets.GH_PACKAGES_WRITE_USERNAME }}
